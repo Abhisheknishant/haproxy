@@ -1,7 +1,9 @@
 # build status appears on https://travis-ci.com/haproxy/haproxy
 
 dist: bionic
-
+arch:
+    - amd64
+    - arm64
 language: c
 
 branches:
@@ -45,11 +47,11 @@ matrix:
     env: TARGET=linux-glibc OPENSSL_VERSION=1.1.1f CC=clang-9
 ##################
 ## temporarily disabled, until arm64 runners become stable
-#  - os: linux
-#    arch: arm64
-#    if: type == push
-#    compiler: clang
-#    env: TARGET=linux-glibc OPENSSL_VERSION=1.1.1f CC=clang-9
+  - os: linux
+    arch: arm64
+    if: type == push
+    compiler: clang
+    env: TARGET=linux-glibc OPENSSL_VERSION=1.1.1f CC=clang-9
   - os: linux
     arch: s390x
     if: type == push
@@ -65,11 +67,33 @@ matrix:
           make -C contrib/wurfl
           curl -s "https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh" | bash || true
         fi
+  
+  - os: linux
+    arch: arm64
+    if: type == cron
+    compiler: clang
+    env: TARGET=linux-glibc OPENSSL_VERSION=1.1.1f COVERITY_SCAN_PROJECT_NAME="Haproxy" COVERITY_SCAN_BRANCH_PATTERN="*" COVERITY_SCAN_NOTIFICATION_EMAIL="chipitsine@gmail.com" COVERITY_SCAN_BUILD_COMMAND="make CC=clang TARGET=$TARGET $FLAGS 51DEGREES_SRC=$FIFTYONEDEGREES_SRC"
+    script:
+      - |
+        if [ ! -z ${COVERITY_SCAN_TOKEN+x} ]; then
+          make -C contrib/wurfl
+          curl -s "https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh" | bash || true
+        fi
   - os: linux
     if: type == cron
     compiler: clang
     env: TARGET=linux-glibc OPENSSL_VERSION=1.1.0l FIFTYONEDEGREES_SRC="contrib/51d/src/trie" CC=clang-9
+  - arch: arm64
+    os: linux
+    if: type == cron
+    compiler: clang
+    env: TARGET=linux-glibc OPENSSL_VERSION=1.1.0l FIFTYONEDEGREES_SRC="contrib/51d/src/trie" CC=clang-9
   - os: linux
+    if: type == push
+    compiler: clang
+    env: TARGET=linux-glibc LIBRESSL_VERSION=3.0.2 CC=clang-9
+  - arch: arm64
+    os: linux
     if: type == push
     compiler: clang
     env: TARGET=linux-glibc LIBRESSL_VERSION=3.0.2 CC=clang-9
@@ -79,6 +103,17 @@ matrix:
     compiler: clang
     env: TARGET=linux-glibc LIBRESSL_VERSION=2.9.2 CC=clang-9
   - os: linux
+    arch: arm64
+    env: DEBUG_OPTIONS=""
+    if: type == cron
+    compiler: clang
+    env: TARGET=linux-glibc LIBRESSL_VERSION=2.9.2 CC=clang-9
+  - os: linux
+    if: type == cron
+    compiler: clang
+    env: TARGET=linux-glibc LIBRESSL_VERSION=2.8.3 EXTRA_OBJS="contrib/prometheus-exporter/service-prometheus.o" CC=clang-9
+  - arch: arm64
+    os: linux
     if: type == cron
     compiler: clang
     env: TARGET=linux-glibc LIBRESSL_VERSION=2.8.3 EXTRA_OBJS="contrib/prometheus-exporter/service-prometheus.o" CC=clang-9
@@ -86,15 +121,34 @@ matrix:
     if: type == cron
     compiler: clang
     env: TARGET=linux-glibc BORINGSSL=yes
+  - arch: arm64
+    os: linux
+    if: type == cron
+    compiler: clang
+    env: TARGET=linux-glibc BORINGSSL=yes
   - os: linux
     if: type == push
     compiler: clang
     env: TARGET=linux-glibc FLAGS= CC=clang-9
+  - arch: arm64
+    os: linux
+    if: type == push
+    compiler: clang
+    env: TARGET=linux-glibc FLAGS= CC=clang-9
+
   - os: osx
     if: type == push
     compiler: clang
     env: TARGET=osx FLAGS="USE_OPENSSL=1" OPENSSL_VERSION=1.1.1f
   - os: linux
+    if: type == cron
+    compiler: clang
+    env: TARGET=linux-glibc FLAGS="USE_SLZ=1 USE_PCRE2=1 USE_PCRE2_JIT=1 USE_LUA=1 USE_OPENSSL=1 USE_SYSTEMD=1 USE_WURFL=1 WURFL_INC=contrib/wurfl WURFL_LIB=contrib/wurfl USE_51DEGREES=1" CC=clang-9
+    before_script:
+      - git clone http://git.1wt.eu/git/libslz.git/
+      - cd libslz && make && make PREFIX=${HOME}/opt install && cd ..
+  - arch: arm64
+    os: linux
     if: type == cron
     compiler: clang
     env: TARGET=linux-glibc FLAGS="USE_SLZ=1 USE_PCRE2=1 USE_PCRE2_JIT=1 USE_LUA=1 USE_OPENSSL=1 USE_SYSTEMD=1 USE_WURFL=1 WURFL_INC=contrib/wurfl WURFL_LIB=contrib/wurfl USE_51DEGREES=1" CC=clang-9
